@@ -1,5 +1,5 @@
 {
-  "name": "MySQL_EmployeeTracker",
+  "name": "employee-tracker",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -11,13 +11,16 @@
     "url": "git+https://github.com/SeyKoplik/MySQL_EmployeeTracker.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Seychelle Koplik",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/SeyKoplik/MySQL_EmployeeTracker/issues"
   },
   "homepage": "https://github.com/SeyKoplik/MySQL_EmployeeTracker#readme",
   "dependencies": {
-    "figlet": "^1.5.0"
+    "console.table": "^0.10.0",
+    "figlet": "^1.5.0",
+    "inquirer": "^7.3.3",
+    "mysql": "^2.16.0"
   }
 }
