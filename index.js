@@ -192,24 +192,16 @@ function createDept() {
 function createRole() {
     connection.query("SELECT dept_name FROM department", function (err, res) {
         if (err) throw err;
-
-        const newRes = (JSON.parse(JSON.stringify(res)));
-        console.log(newRes);
-        const resArray = newRes.map(({ dept_name }) => dept_name);
-        console.log(resArray)
-        let choiceArray = resArray.push("New Department");
-        console.log(choiceArray)
-
-
+        // console.log(res);
+        const resArray = res.map(({ dept_name }) => dept_name);
+        resArray.push('New Department')
+        // console.log(resArray)
         inquirer.prompt([{
             type: "list",
             name: "role_dept",
             message: "What department is this new role in?",
-            choices: choiceArray,
-            validate: function () {
-                return 'Please select a choice or add department first if it is not on the list';
-            }
-        }, {
+            choices: resArray
+        }, { //====================== NEED TO BREAK UP and THEN do the other prompts
             type: "input",
             name: "role_title",
             message: "What is the title of the new role?"
@@ -223,7 +215,7 @@ function createRole() {
 
             } else {
                 console.log("Inserting a new role...\n");
-                for (let i = 0; i < choiceArray.length; i++) {
+                for (let i = 0; i < resArray.length; i++) {
                     console.log(answer.role_dept[i]);
                     const newDeptId = (parseInt(answer.role_dept[i]))
 
