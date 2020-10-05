@@ -27,7 +27,7 @@ const connection = mysql.createConnection({
 
 connection.connect(function (err) {
     if (err) throw err;
-    console.log("Connecting to database...\n");
+    console.log("Connected to database as ID:" + connection.threadId + "\n");
     whatToDoFirst();
 });
 
@@ -37,8 +37,8 @@ const whatToDoFirst = function () {
         name: "firstPrompt",
         message: "What would you like to do?",
         choices: [
-            "Add department, roles, or employees",
             "View departments, roles, or employees",
+            "Add department, roles, or employees",
             "Update Employee Role"]
     }).then(function (answer) {
         //what to do next
@@ -46,45 +46,19 @@ const whatToDoFirst = function () {
             case "Add department, roles, or employees":
                 // console.log(`Add something!`);
                 whatToAdd();
+                break;
 
-            case "View departments, roles, or employees":
+            case "View departments, roles, employees, or everything":
                 // console.log('View something!');
                 whatToView();
+                break;
 
             case "Update Employee Role":
                 console.log('Update Employee Role!');
-            //updateEmployeeRole();
-        }
+               // updateEmployeeRole();
+        };
     })
 } // === end of whatToDoFirst function
-
-const whatToAdd = function () {
-    inquirer.prompt({
-        type: "list",
-        name: "addingPrompt",
-        message: "What would you like to add?",
-        choices: [
-            "Department",
-            "Role",
-            "Employee"]
-    }).then(function (answer) {
-        switch (answer.addingPrompt) {
-            case "Department":
-                // console.log(`Add department!`);
-                createDept();
-
-            case "Role":
-                // console.log('Add a Role!');
-                createRole();
-
-            case "Employee":
-                // console.log('Add Employee!');
-                createEmployee();
-
-        }
-    })
-} //=== end of whatWouldYouLikeToAdd function
-
 
 const whatToView = function () {
     inquirer.prompt({
@@ -101,30 +75,65 @@ const whatToView = function () {
             case "Departments":
                 // console.log(`View departments!`);
                 read_viewDepts();
+                break;
 
             case "Roles":
                 // console.log('View Roles!');
                 read_viewRoles();
+                break;
 
             case "Employees":
                 // console.log('View Employees!');
                 read_viewEmployees();
+                break;
 
             case "Everything!":
+                // console.log("View Everything!");
                 read_viewAll();
+                break;
         }
     })
 } //=== end of whatWouldYouLikeToView function
 
+const whatToAdd = function () {
+    inquirer.prompt([{
+        type: "list",
+        name: "addingPrompt",
+        message: "What would you like to add?",
+        choices: [
+            "Department",
+            "Role",
+            "Employee"
+        ]
+    }]).then(function (answer) {
+        switch (answer.addingPrompt) {
+            case "Department":
+                // console.log(`Add department!`);
+                createDept();
+                break;
+
+            case "Role":
+                // console.log('Add a Role!');
+                createRole();
+                break;
+
+            case "Employee":
+                // console.log('Add Employee!');
+                createEmployee();
+                break;
+
+        }
+    })
+} //=== end of whatWouldYouLikeToAdd function
 
 function createDept() {
-    inquirer.prompt([{
+    inquirer.prompt({
         type: "input",
         name: "departmentName",
-        message: "What department name would you like to add?"
-    }]).then(function (answer) {
+        message: "What department would you like to add?"
+    }).then(function (answer) {
         console.log("Inserting a new department...\n");
-        var query = connection.query(
+        connection.query(
             "INSERT INTO department SET ?",
             {
                 dept_name: answer.departmentName,
@@ -132,42 +141,51 @@ function createDept() {
             function (err, res) {
                 if (err) throw err;
                 console.log(res.affectedRows + " department added!\n");
+                whatToDoFirst();
             }
         );
-        console.log(query.sql);
     });
 } // === end of createDept function
 
-
 function createRole() {
-    const roleQuery = `SELECT * FROM role; SELECT * FROM department`
-    connection.query(roleQuery, (err, res) => {
-        if (err) throw err;
+    inquirer.prompt([{
+        type: "list",
+        name: "role_dept",
+        message: "What department is this new role in?",
+        choices: [
+            "Legal",
+            "Engineering",
+            "Finance",
+            "Sales",
+            "New Department"
+        ]
+    }, {
+        type: "input",
+        name: "role_title",
+        message: "What is the title of the new role?"
+    }, {
+        type: "input",
+        name: "role_salary",
+        message: "What is salary for this new role?"
+    }]).then(function (answer) {
+        if (answer.role_dept === "New Department") {
+            createDept();
 
-        inquirer.prompt([{
-            type: "input",
-            name: "role_dept",
-            message: "What department is this new role in?",
-            choices: function () {
-                let choiceArr = res[1].map(choice => choice.dept_name);
-                return choiceArr;
-            }
-        }, {
-            type: "input",
-            name: "role_title",
-            message: "What is the title of the new role?"
-        }, {
-            type: "input",
-            name: "role_salary",
-            message: "What is salary for this new role?"
-        }]).then(function (answer) {
+        } else {
             console.log("Inserting a new role...\n");
 
             connection.query(
-                `INSERT INTO role(title, salary, department_id) VALUES ("${answer.role_title}", "${answer.role_salary}", (SELECT id FROM department WHERE dept_name = "${answer.role_dept}"));`)
-
-            console.log(res.affectedRows + " role added!\n");
-        });
+                "INSERT INTO role SET?",
+                {
+                    title: answer.role_title,
+                    salary: answer.role_salary,
+                    department_id: answer.role_dept
+                }, function (err, res) {
+                    if (err) { throw err; }
+                    console.log(res.affectedRows + " role added!\n");
+                }
+            );
+        }
     });
 }; // === End of createRole function
 
@@ -183,15 +201,15 @@ function createEmployee() {
     }, {
         type: "input",
         name: "dept_name",
-        message: "What is your new employees's department?",
+        message: "Which department is the new employer going to be assigned to?",
     }, {
         type: "input",
         name: "title",
-        message: "What is your new employees's title role?"
+        message: "What is your new employees's role title?"
     }, {
         type: "input",
-        name: "salary",
-        message: "What is your new employees's salary?"
+        name: "managerName",
+        message: "Who is your new employee's manager?"
     }]).then(function (answer) {
         console.log("Inserting your new employee...\n");
         var query = connection.query(
@@ -227,6 +245,7 @@ function read_viewDepts() {
         if (err) throw err;
         console.table(res);
         // connection.end();
+        whatToDoFirst();
     });
 }
 
@@ -236,6 +255,7 @@ function read_viewRoles() {
         if (err) throw err;
         console.table(res);
         // connection.end();
+        whatToDoFirst();
     });
 }
 
@@ -245,6 +265,7 @@ function read_viewEmployees() {
         if (err) throw err;
         console.table(res);
         // connection.end();
+        whatToDoFirst();
     });
 }
 
@@ -252,9 +273,10 @@ function read_viewEmployees() {
 function read_viewAll() {
     console.log("Selecting all info...\n");
     connection.query
-        ("SELECT * FROM employee INNER JOIN role ON role_id = id INNER JOIN department ON department_id  = id ORDER BY name", function (err, res) {
+        ("SELECT e.id, CONCAT(e.first_name, ' ', e.last_name) AS 'Employee', d.dept_name AS 'Department', r.title, r.salary, CONCAT(m.first_name, ' ', m.last_name) AS 'Manager' FROM employee e LEFT JOIN employee m ON m.id = e.manager_id LEFT JOIN role r ON e.role_id = r.id LEFT JOIN department d ON d.id = r.department_id ORDER BY e.id ASC;", function (err, res) {
             if (err) throw err;
             console.table(res);
+            whatToDoFirst();
         });
 }
 

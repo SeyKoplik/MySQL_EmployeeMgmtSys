@@ -5,22 +5,22 @@ CREATE DATABASE employee_mgmtDB;
 USE employee_mgmtDB;
 
 CREATE TABLE department (
-  id INT AUTO_INCREMENT,
+  id INT AUTO_INCREMENT NOT NULL,
   dept_name VARCHAR(30),
   PRIMARY KEY (id)
 );
 
 CREATE TABLE role (
-  id INT AUTO_INCREMENT,
+  id INT AUTO_INCREMENT NOT NULL,
   title VARCHAR(30) NOT NULL,
-  salary INT(10),
+  salary INT,
   department_id INT,
   PRIMARY KEY (id),
   FOREIGN KEY (department_id) REFERENCES department(id)
 );
 
 CREATE TABLE employee (
-  id INT AUTO_INCREMENT,
+  id INT AUTO_INCREMENT NOT NULL,
   first_name VARCHAR(30) NOT NULL,
   last_name VARCHAR(30) NOT NULL,
   role_id INT, 
