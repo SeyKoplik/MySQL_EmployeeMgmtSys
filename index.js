@@ -129,7 +129,7 @@ function viewEmployees() {
 function viewAll() {
     console.log("Selecting all info...\n");
     connection.query
-        ("SELECT e.id, CONCAT(e.first_name, ' ', e.last_name) AS 'Employee', d.dept_name AS 'Department', r.title, r.salary, CONCAT(m.first_name, ' ', m.last_name) AS 'Manager' FROM employee e LEFT JOIN employee m ON m.id = e.manager_id LEFT JOIN role r ON e.role_id = r.id LEFT JOIN department d ON d.id = r.department_id ORDER BY e.id ASC;", function (err, res) {
+        ("SELECT employee.id, CONCAT(employee.first_name, ' ', employee.last_name) AS 'Employee', department.dept_name AS 'Department', role.title AS 'Title', role.salary AS 'Salary', CONCAT(manager.first_name, ' ', manager.last_name) AS 'Manager' FROM employee employee LEFT JOIN employee manager ON manager.id = employee.manager_id LEFT JOIN role role ON employee.role_id = role.id LEFT JOIN department department ON department.id = role.department_id ORDER BY employee.id ASC;", function (err, res) {
             if (err) throw err;
             console.table(res);
             whatToDoFirst();
@@ -194,56 +194,55 @@ function createRole() {
         if (err) throw err;
 
         const newRes = (JSON.parse(JSON.stringify(res)));
+        console.log(newRes);
+        const resArray = newRes.map(({ dept_name }) => dept_name);
+        console.log(resArray)
+        let choiceArray = resArray.push("New Department");
+        console.log(choiceArray)
 
-        // for (const newNewRes of newRes) 
-        // {
-            console.log(newRes);
 
-            const choiceArray = [];
-            choiceArray.push(newRes);
-        // }
+        inquirer.prompt([{
+            type: "list",
+            name: "role_dept",
+            message: "What department is this new role in?",
+            choices: choiceArray,
+            validate: function () {
+                return 'Please select a choice or add department first if it is not on the list';
+            }
+        }, {
+            type: "input",
+            name: "role_title",
+            message: "What is the title of the new role?"
+        }, {
+            type: "input",
+            name: "role_salary",
+            message: "What is salary for this new role?"
+        }]).then(function (answer) {
+            if (answer.role_dept === "New Department") {
+                createDept();
 
-            inquirer.prompt([{
-                type: "list",
-                name: "role_dept",
-                message: "What department is this new role in?",
-                choices: choiceArray,
-                validate: function () {
-                    return 'Please select a choice or add department first if it is not on the list';
+            } else {
+                console.log("Inserting a new role...\n");
+                for (let i = 0; i < choiceArray.length; i++) {
+                    console.log(answer.role_dept[i]);
+                    const newDeptId = (parseInt(answer.role_dept[i]))
+
+                    connection.query(
+                        "INSERT INTO role SET ?",
+                        {
+                            title: answer.role_title,
+                            salary: answer.role_salary,
+                            department_id: newDeptId
+
+                        }, function (err, res) {
+                            if (err) { throw err; }
+
+                            console.log(res.affectedRows + " role added!\n");
+                        }
+                    );
                 }
-            }, {
-                type: "input",
-                name: "role_title",
-                message: "What is the title of the new role?"
-            }, {
-                type: "input",
-                name: "role_salary",
-                message: "What is salary for this new role?"
-            }]).then(function (answer) {
-                if (answer.role_dept === "New Department") {
-                    createDept();
-
-                } else {
-                    console.log("Inserting a new role...\n");
-                    for (let i = 0; i < choiceArray.length; i++) {
-                        console.log(answer.role_dept[i]);
-                        const newDeptId = (parseInt(answer.role_dept[i]))
-
-                        connection.query(
-                            "INSERT INTO role SET ?",
-                            {
-                                title: answer.role_title,
-                                salary: answer.role_salary,
-                                department_id: newDeptId
-
-                            }, function (err, res) {
-                                if (err) { throw err; }
-                                console.log(res.affectedRows + " role added!\n");
-                            }
-                        );
-                    }
-                }
-            });
+            }
+        });
     })
 }; // === End of createRole function
 
@@ -257,9 +256,10 @@ function createEmployee() {
         name: "last_name",
         message: "What is your new employees's last name?"
     }, {
-        type: "input",
+        type: "list",
         name: "dept_name",
         message: "Which department is the new employer going to be assigned to?",
+        choices: deptChoiceArray
     }, {
         type: "input",
         name: "title",
