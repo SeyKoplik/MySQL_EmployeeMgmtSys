@@ -37,25 +37,25 @@ const whatToDoFirst = function () {
         name: "firstPrompt",
         message: "What would you like to do?",
         choices: [
-            "View departments, roles, or employees",
+            "View departments, roles, employees, or everything",
             "Add department, roles, or employees",
             "Update Employee Role"]
     }).then(function (answer) {
         //what to do next
         switch (answer.firstPrompt) {
-            case "Add department, roles, or employees":
-                // console.log(`Add something!`);
-                whatToAdd();
-                break;
-
             case "View departments, roles, employees, or everything":
                 // console.log('View something!');
                 whatToView();
                 break;
 
+            case "Add department, roles, or employees":
+                // console.log(`Add something!`);
+                whatToAdd();
+                break;
+
             case "Update Employee Role":
                 console.log('Update Employee Role!');
-               // updateEmployeeRole();
+            // updateEmployeeRole();
         };
     })
 } // === end of whatToDoFirst function
@@ -74,26 +74,68 @@ const whatToView = function () {
         switch (answer.viewPrompt) {
             case "Departments":
                 // console.log(`View departments!`);
-                read_viewDepts();
+                viewDepts();
                 break;
 
             case "Roles":
                 // console.log('View Roles!');
-                read_viewRoles();
+                viewRoles();
                 break;
 
             case "Employees":
                 // console.log('View Employees!');
-                read_viewEmployees();
+                viewEmployees();
                 break;
 
             case "Everything!":
                 // console.log("View Everything!");
-                read_viewAll();
+                viewAll();
                 break;
         }
     })
 } //=== end of whatWouldYouLikeToView function
+
+
+function viewDepts() {
+    console.log("Selecting all Departments...\n");
+    connection.query("SELECT * FROM department", function (err, res) {
+        if (err) throw err;
+        console.table(res);
+        // connection.end();
+        whatToDoFirst();
+    });
+}
+
+function viewRoles() {
+    console.log("Selecting all Roles...\n");
+    connection.query("SELECT * FROM role", function (err, res) {
+        if (err) throw err;
+        console.table(res);
+        // connection.end();
+        whatToDoFirst();
+    });
+}
+
+function viewEmployees() {
+    console.log("Selecting all Employees...\n");
+    connection.query("SELECT * FROM employee", function (err, res) {
+        if (err) throw err;
+        console.table(res);
+        // connection.end();
+        whatToDoFirst();
+    });
+}
+
+function viewAll() {
+    console.log("Selecting all info...\n");
+    connection.query
+        ("SELECT e.id, CONCAT(e.first_name, ' ', e.last_name) AS 'Employee', d.dept_name AS 'Department', r.title, r.salary, CONCAT(m.first_name, ' ', m.last_name) AS 'Manager' FROM employee e LEFT JOIN employee m ON m.id = e.manager_id LEFT JOIN role r ON e.role_id = r.id LEFT JOIN department d ON d.id = r.department_id ORDER BY e.id ASC;", function (err, res) {
+            if (err) throw err;
+            console.table(res);
+            whatToDoFirst();
+        });
+}
+
 
 const whatToAdd = function () {
     inquirer.prompt([{
@@ -148,45 +190,61 @@ function createDept() {
 } // === end of createDept function
 
 function createRole() {
-    inquirer.prompt([{
-        type: "list",
-        name: "role_dept",
-        message: "What department is this new role in?",
-        choices: [
-            "Legal",
-            "Engineering",
-            "Finance",
-            "Sales",
-            "New Department"
-        ]
-    }, {
-        type: "input",
-        name: "role_title",
-        message: "What is the title of the new role?"
-    }, {
-        type: "input",
-        name: "role_salary",
-        message: "What is salary for this new role?"
-    }]).then(function (answer) {
-        if (answer.role_dept === "New Department") {
-            createDept();
+    connection.query("SELECT dept_name FROM department", function (err, res) {
+        if (err) throw err;
 
-        } else {
-            console.log("Inserting a new role...\n");
+        const newRes = (JSON.parse(JSON.stringify(res)));
 
-            connection.query(
-                "INSERT INTO role SET?",
-                {
-                    title: answer.role_title,
-                    salary: answer.role_salary,
-                    department_id: answer.role_dept
-                }, function (err, res) {
-                    if (err) { throw err; }
-                    console.log(res.affectedRows + " role added!\n");
+        // for (const newNewRes of newRes) 
+        // {
+            console.log(newRes);
+
+            const choiceArray = [];
+            choiceArray.push(newRes);
+        // }
+
+            inquirer.prompt([{
+                type: "list",
+                name: "role_dept",
+                message: "What department is this new role in?",
+                choices: choiceArray,
+                validate: function () {
+                    return 'Please select a choice or add department first if it is not on the list';
                 }
-            );
-        }
-    });
+            }, {
+                type: "input",
+                name: "role_title",
+                message: "What is the title of the new role?"
+            }, {
+                type: "input",
+                name: "role_salary",
+                message: "What is salary for this new role?"
+            }]).then(function (answer) {
+                if (answer.role_dept === "New Department") {
+                    createDept();
+
+                } else {
+                    console.log("Inserting a new role...\n");
+                    for (let i = 0; i < choiceArray.length; i++) {
+                        console.log(answer.role_dept[i]);
+                        const newDeptId = (parseInt(answer.role_dept[i]))
+
+                        connection.query(
+                            "INSERT INTO role SET ?",
+                            {
+                                title: answer.role_title,
+                                salary: answer.role_salary,
+                                department_id: newDeptId
+
+                            }, function (err, res) {
+                                if (err) { throw err; }
+                                console.log(res.affectedRows + " role added!\n");
+                            }
+                        );
+                    }
+                }
+            });
+    })
 }; // === End of createRole function
 
 function createEmployee() {
@@ -237,48 +295,6 @@ function createEmployee() {
         console.log(query.sql);
     });
 } // ==== End of createEmployee function
-
-
-function read_viewDepts() {
-    console.log("Selecting all Departments...\n");
-    connection.query("SELECT * FROM department", function (err, res) {
-        if (err) throw err;
-        console.table(res);
-        // connection.end();
-        whatToDoFirst();
-    });
-}
-
-function read_viewRoles() {
-    console.log("Selecting all Roles...\n");
-    connection.query("SELECT * FROM role", function (err, res) {
-        if (err) throw err;
-        console.table(res);
-        // connection.end();
-        whatToDoFirst();
-    });
-}
-
-function read_viewEmployees() {
-    console.log("Selecting all Employees...\n");
-    connection.query("SELECT * FROM employee", function (err, res) {
-        if (err) throw err;
-        console.table(res);
-        // connection.end();
-        whatToDoFirst();
-    });
-}
-
-
-function read_viewAll() {
-    console.log("Selecting all info...\n");
-    connection.query
-        ("SELECT e.id, CONCAT(e.first_name, ' ', e.last_name) AS 'Employee', d.dept_name AS 'Department', r.title, r.salary, CONCAT(m.first_name, ' ', m.last_name) AS 'Manager' FROM employee e LEFT JOIN employee m ON m.id = e.manager_id LEFT JOIN role r ON e.role_id = r.id LEFT JOIN department d ON d.id = r.department_id ORDER BY e.id ASC;", function (err, res) {
-            if (err) throw err;
-            console.table(res);
-            whatToDoFirst();
-        });
-}
 
 
 // function updateEmployeeRole() {
