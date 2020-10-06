@@ -240,118 +240,93 @@ function createRole() {
 
 
 function createEmployee() {
-    connection.query("SELECT * FROM department INNER JOIN role ON department.id = role.department_id INNER JOIN employee ON role.id = employee.role_id", function (err, res) {
+    connection.query("SELECT employee.id AS 'empID', CONCAT(employee.first_name, ' ', employee.last_name) AS 'Employee', department.dept_name AS 'Department', role.title AS 'Title', role.salary AS 'Salary', CONCAT(manager.first_name, ' ', manager.last_name) AS 'Manager' FROM employee employee LEFT JOIN employee manager ON manager.id = employee.manager_id LEFT JOIN role role ON employee.role_id = role.id LEFT JOIN department department ON department.id = role.department_id ORDER BY employee.id ASC;", function (err, res) {
         if (err) throw err;
         // console.log(res); //<< returns everything as promised
-        const deptArray = res.map(({ dept_name }) => dept_name);
+        const deptArray = res.map(({ Department }) => Department);
         // console.log(deptArray);
         const deptChoice = [];
         deptArray.forEach((dept) => {
-            if (!deptChoice.includes(dept)){
+            if (!deptChoice.includes(dept)) {
                 deptChoice.push(dept)
             }
         });
         // console.log(deptChoice);
-        const roleArray = res.map(({ title }) => title);
+        const roleArray = res.map(({ Title }) => Title);
         // console.log(roleArray);
         const roleChoice = [];
         roleArray.forEach((role) => {
-            if (!roleChoice.includes(role)){
+            if (!roleChoice.includes(role)) {
                 roleChoice.push(role)
             }
         });
-        // console.log(roleChoice);
-    });
+        const fullNameArray = res.map(({ Employee }) => Employee)
+        // console.log(fullNameArray);
 
-    inquirer.prompt([{
-        type: "input",
-        name: "first_name",
-        message: "What is your new employees's first name?"
-    }, {
-        type: "input",
-        name: "last_name",
-        message: "What is your new employees's last name?"
-    }, {
-        type: "list",
-        name: "dept_name",
-        message: "Which department is the new employer going to be assigned to?",
-        choices: deptChoice
-    }, {
-        type: "list",
-        name: "title",
-        message: "What is your new employees's role title?",
-        choices: roleChoice
-    }, {
-        type: "input",
-        name: "managerName",
-        message: "Who is your new employee's manager?"
-    }]).then(function (answer) {
-        console.log("Inserting your new employee...\n");
-        var query = connection.query(
-            "INSERT INTO employee SET ?",
-            {
-                first_name: answer.first_name,
-                last_name: answer.last_name
-            },
-            //*********** NEED TO FIX */
-            "INSERT INTO department SET ?",
-            {
-                dept_name: answer.dept_name
-            },
-            "INSERT INTO role SET ?",
-            {
-                title: answer.title,
-                salary: answer.salary
-            },
-            function (err, res) {
-                if (err) throw err;
-                console.log(res.affectedRows + " new employee added!\n");
-            }
-        );
-        // logs the actual query being run
-        console.log(query.sql);
-    });
-} // ==== End of createEmployee function
+        inquirer.prompt([{
+            type: "input",
+            name: "first_name",
+            message: "What is your new employees's first name?"
+        }, {
+            type: "input",
+            name: "last_name",
+            message: "What is your new employees's last name?"
+        }, {
+            type: "list",
+            name: "dept_name",
+            message: "Which department is the new employee going to be assigned to?",
+            choices: deptChoice
+        }, {
+            type: "list",
+            name: "title",
+            message: "What is your new employees's role?",
+            choices: roleChoice
+        }, {
+            type: "list",
+            name: "managerName",
+            message: "Who is your new employee's manager?",
+            choices: fullNameArray
+        }]).then(function (answer) {
+            console.log("Inserting your new employee...\n");
 
+            connection.query("SELECT * FROM role", function (err, roleData) {
+                const roleID = roleData.map(({ id }) => id);
+                const roleTitle = roleData.map(({ title }) => title);
+                for (var i = 0; i < roleTitle.length; i++)
+                    if (answer.title === roleTitle[i]) {
+                        const newRoleID = roleID[i];
+                        // console.log(newRoleID);
+                        
+                        connection.query("SELECT employee.id AS 'empID', CONCAT(employee.first_name, ' ', employee.last_name) AS 'Employee' FROM employee employee LEFT JOIN employee manager ON manager.id = employee.manager_id", function (err, empData) {
+                            const empID = empData.map(({empID }) => empID);
+                            const mgrFullName = empData.map(({ Employee }) => Employee);
+                            for (var i = 0; i < roleTitle.length; i++)
+                                if (answer.managerName === mgrFullName[i]) {
+                                    const newMgrID = empID[i];
+                                    // console.log(newMgrID);
 
+                                    connection.query(
+                                        "INSERT INTO employee SET ?",
+                                        {
+                                            first_name: answer.first_name,
+                                            last_name: answer.last_name,
+                                            role_id: newRoleID,
+                                            manager_id: newMgrID,
+                                        }, function (err, res) {
+                                            if (err) throw err;
 
+                                            console.log(`${answer.first_name} ${answer.last_name} has been added to the employee list!`);
 
-
- // connection.query("SELECT * FROM department", function (err, res) {
- //     if (err) throw err;
- //     // console.log(res);
- //     const deptName = res.map(({ dept_name }) => dept_name);
- //     // console.log(deptName);
- //     const deptId = res.map(({ id }) => id);
- //     // console.log(deptId);
-
- //     for (var i = 0; i < deptName.length; i++) {
- //         if (deptName[i] === answer.role_dept) {
- //             const dept_id = deptId[i];
-
- //             connection.query("INSERT INTO role SET ?",
- //  {
- //      department_id: dept_id
- //                 }, function (err, res) {
- //      if (err) throw err;
- //  }) // end closest query
- //         }
- //     }; //== ending for loop
- // }); // === end second closest query
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                                            whatToDoFirst();
+                                        }
+                                    )
+                                }//=== end for-loop
+                        })
+                    }
+                    }) 
+                });
+        });
+    } // ==== End of createEmployee function
 
 
 // function updateEmployeeRole() {
@@ -362,120 +337,11 @@ function createEmployee() {
 //         type: "list",
 //         name: "empChoice",
 //         message: "Which employee would you like to update?",
-//         choices: function () {
-//         let choiceArray = res.map(choice => choice.employee_FULLname)
-//         return choiceArray; }
+//         choices: 
 //     }, {
-//         type: "input",
+//         type: "list",
 //         name: "role_update",
 //         message: "What role would you like to update it to?"
+//         choices:
 //     }]).then(function (answer) {
-            // let chosenEmp;
-            // for (let i = 0; i < results.length; i++) {
-            //     if (results[i].employee_name === answer.empChoice) {
-            //         chosenEmp = results[i];
-            //     }
-            // }
-//         var query = connection.query(
-//             "UPDATE role SET ? WHERE ?",
-//             [
-//                 {
-//                     title: answer.role_update,
-//                 },
-//                 {
-//                     name: answer.employee_name
-//                 }
-//             ],
-//             function (err, res) {
-//                 if (err) throw err;
-//                 console.log(res.affectedRows + " products updated!\n");
-//                 // Call deleteProduct AFTER the UPDATE completes
-//                 deleteProduct();
-//             }
-//         );
-
-//         // logs the actual query being run
-//         console.log(query.sql);
-//         });
-//        })
-//     };
-
-
-
-//============================== ALL OF HW RELATED STOP HERE
-
-
-// function createProduct() {
-//     console.log("Inserting a new product...\n");
-//     var query = connection.query(
-//         "INSERT INTO products SET ?",
-//         {
-//             flavor: "Rocky Road",
-//             price: 3.0,
-//             quantity: 50
-//         },
-//         function (err, res) {
-//             if (err) throw err;
-//             console.log(res.affectedRows + " product inserted!\n");
-//             // Call updateProduct AFTER the INSERT completes
-//             updateProduct();
-//         }
-//     );
-
-//     // logs the actual query being run
-//     console.log(query.sql);
-// }
-
-// function updateProduct() {
-//     console.log("Updating all Rocky Road quantities...\n");
-//     var query = connection.query(
-//         "UPDATE products SET ? WHERE ?",
-//         [
-//             {
-//                 quantity: 100
-//             },
-//             {
-//                 flavor: "Rocky Road"
-//             }
-//         ],
-//         function (err, res) {
-//             if (err) throw err;
-//             console.log(res.affectedRows + " products updated!\n");
-//             // Call deleteProduct AFTER the UPDATE completes
-//             deleteProduct();
-//         }
-//     );
-
-//     // logs the actual query being run
-//     console.log(query.sql);
-// }
-
-// function deleteProduct() {
-//     console.log("Deleting all strawberry icecream...\n");
-//     connection.query(
-//         "DELETE FROM products WHERE ?",
-//         {
-//             flavor: "strawberry"
-//         },
-//         function (err, res) {
-//             if (err) throw err;
-//             console.log(res.affectedRows + " products deleted!\n");
-//             // Call readProducts AFTER the DELETE completes
-//             readProducts();
-//         }
-//     );
-// }
-
-// function readProducts() {
-//     console.log("Selecting all products...\n");
-//     connection.query("SELECT * FROM products", function (err, res) {
-//         if (err) throw err;
-//         // Log all results of the SELECT statement
-//         console.log(res);
-//         connection.end();
-//     });
-// }
-//===================== ALL NEEDED FOR CRUD CONNECTION TO MYSQL
-
-
 
