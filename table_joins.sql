@@ -10,3 +10,12 @@ SELECT employee.id AS 'empID', CONCAT(employee.first_name, ' ', employee.last_na
 SELECT employee.id AS 'empID', CONCAT(employee.first_name, ' ', employee.last_name) AS 'Employee' FROM employee employee LEFT JOIN employee manager ON manager.id = employee.manager_id
 
 SELECT employee.id AS 'empID', CONCAT(employee.first_name, ' ', employee.last_name) AS 'Employee', employee.role_id, role.id, role.title, role.salary FROM employee LEFT JOIN role ON employee.role_id = role.id
+
+
+-- VIEW EMPLOYEE BY DEPARTMENT (Engineering)
+SELECT department.dept_name AS 'Department', CONCAT(employee.first_name, ' ', employee.last_name) AS 'Employee', 
+role.title AS 'Role', role.salary AS 'Salary', CONCAT(manager.first_name, ' ', manager.last_name) AS 'Manager' 
+FROM employee LEFT JOIN employee manager ON manager.id = employee.manager_id 
+INNER JOIN Role role ON employee.role_id = role.id 
+INNER JOIN department ON department.id = role.department_id
+WHERE department.dept_name = 'Engineering';

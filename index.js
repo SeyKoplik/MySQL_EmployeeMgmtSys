@@ -2,6 +2,7 @@ const cTable = require('console.table');
 const figlet = require('figlet');
 const mysql = require("mysql");
 const inquirer = require("inquirer");
+require('dotenv').config()
 
 //======= function for displaying the employee tracker
 function showFunDisplay() {
@@ -21,7 +22,7 @@ const connection = mysql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
-    password: "Loveboat10",
+    password: process.env.DB_PASS,
     database: "employee_mgmtDB"
 });
 
@@ -62,6 +63,7 @@ const whatToDoFirst = function () {
 
             default:
                 connection.end();
+                break;
         };
     })
 } // === end of whatToDoFirst function
@@ -75,6 +77,7 @@ const whatToView = function () {
             "Departments",
             "Roles",
             "Employees",
+            "Employee by Department",
             "Everything!"]
     }).then(function (answer) {
         switch (answer.viewPrompt) {
@@ -91,6 +94,11 @@ const whatToView = function () {
             case "Employees":
                 // console.log('View Employees!');
                 viewEmployees();
+                break;
+
+            case "Employee by Department":
+                //console.log('Employee by department!');
+                viewEmpByDept();
                 break;
 
             case "Everything!":
@@ -127,6 +135,28 @@ function viewEmployees() {
         console.table(res);
         whatToDoFirst();
     });
+}
+
+function viewEmpByDept() {
+    connection.query("SELECT dept_name FROM department", function (err, deptData) {
+        if (err) throw err;
+        const deptArray = deptData.map(({ dept_name }) => dept_name);
+        console.log(deptArray);
+
+        inquirer.prompt({
+            type: "list",
+            name: "viewDepts",
+            message: "Which department would you like to view?",
+            choices: deptArray
+        }).then(function (answer) {
+            console.log("Selecting all Employees by Department...\n");
+            connection.query("SELECT department.dept_name AS 'Department', employee.id AS 'ID', CONCAT(employee.first_name, ' ', employee.last_name) AS 'Employee', role.title AS 'Role', role.salary AS 'Salary', CONCAT(manager.first_name, ' ', manager.last_name) AS 'Manager' FROM employee LEFT JOIN employee manager ON manager.id = employee.manager_id INNER JOIN Role role ON employee.role_id = role.id INNER JOIN department ON department.id = role.department_id WHERE department.dept_name = ? ", [answer.viewDepts], function (err, res) {
+                if (err) throw err;
+                console.table(res);
+                whatToDoFirst();
+            });
+        });
+    })
 }
 
 function viewAll() {
