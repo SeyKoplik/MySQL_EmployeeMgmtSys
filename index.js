@@ -27,7 +27,7 @@ const connection = mysql.createConnection({
 
 connection.connect(function (err) {
     if (err) throw err;
-    console.log("Connected to database as ID:" + connection.threadId + "\n");
+    // console.log("Connected to database as ID:" + connection.threadId + "\n");
     whatToDoFirst();
 });
 
@@ -39,7 +39,9 @@ const whatToDoFirst = function () {
         choices: [
             "View departments, roles, employees, or everything",
             "Add department, roles, or employees",
-            "Update Employee Role"]
+            "Update Employee Role",
+            "Exit"
+        ]
     }).then(function (answer) {
         //what to do next
         switch (answer.firstPrompt) {
@@ -54,8 +56,12 @@ const whatToDoFirst = function () {
                 break;
 
             case "Update Employee Role":
-                console.log('Update Employee Role!');
-            // updateEmployeeRole();
+                // console.log('Update Employee Role!');
+                updateEmployeeRole();
+                break;
+
+            default:
+                connection.end();
         };
     })
 } // === end of whatToDoFirst function
@@ -101,7 +107,6 @@ function viewDepts() {
     connection.query("SELECT * FROM department", function (err, res) {
         if (err) throw err;
         console.table(res);
-        // connection.end();
         whatToDoFirst();
     });
 }
@@ -111,7 +116,6 @@ function viewRoles() {
     connection.query("SELECT * FROM role", function (err, res) {
         if (err) throw err;
         console.table(res);
-        // connection.end();
         whatToDoFirst();
     });
 }
@@ -121,7 +125,6 @@ function viewEmployees() {
     connection.query("SELECT * FROM employee", function (err, res) {
         if (err) throw err;
         console.table(res);
-        // connection.end();
         whatToDoFirst();
     });
 }
@@ -182,7 +185,11 @@ function createDept() {
             },
             function (err, res) {
                 if (err) throw err;
-                console.log(res.affectedRows + " department added!\n");
+
+                console.log(`=============\n`);
+                console.log(`\n   ${answer.departmentName} department added!\n`);
+                console.log(`=============\n`);
+
                 whatToDoFirst();
             }
         );
@@ -190,9 +197,9 @@ function createDept() {
 } // === end of createDept function
 
 function createRole() {
-    connection.query("SELECT role.title, role.salary, role.department_id, department.dept_name, department.id FROM department INNER JOIN role ON role.department_id = department.id", function (err, res) {
+    connection.query("SELECT role.title, role.salary, role.department_id, department.dept_name, department.id FROM department INNER JOIN role ON role.department_id = department.id", function (err, roleData) {
         if (err) throw err;
-        const resArray = res.map(({ dept_name }) => dept_name);
+        const resArray = roleData.map(({ dept_name }) => dept_name);
         resArray.push('New Department')
         // console.log(resArray)
         inquirer.prompt([{
@@ -205,7 +212,7 @@ function createRole() {
                 console.log(`!! ** PLEASE ENTER NEW DEPARTMENT FIRST ** !!`);
                 createDept();
             } else {
-                const deptName = res.map(({ dept_name }) => dept_name);
+                const deptName = roleData.map(({ dept_name }) => dept_name);
                 const newId = deptName.indexOf(answer.role_dept);
                 // console.log(newId);
                 inquirer.prompt([{
@@ -227,7 +234,9 @@ function createRole() {
                         }, function (err, res) {
                             if (err) throw err;
 
-                            console.log(`New Role Added!`);
+                            console.log(`=============\n`);
+                            console.log(`\n   ${answer.role_title} role added!\n`);
+                            console.log(`=============\n`);
 
                             whatToDoFirst();
                         }
@@ -240,10 +249,10 @@ function createRole() {
 
 
 function createEmployee() {
-    connection.query("SELECT employee.id AS 'empID', CONCAT(employee.first_name, ' ', employee.last_name) AS 'Employee', department.dept_name AS 'Department', role.title AS 'Title', role.salary AS 'Salary', CONCAT(manager.first_name, ' ', manager.last_name) AS 'Manager' FROM employee employee LEFT JOIN employee manager ON manager.id = employee.manager_id LEFT JOIN role role ON employee.role_id = role.id LEFT JOIN department department ON department.id = role.department_id ORDER BY employee.id ASC;", function (err, res) {
+    connection.query("SELECT employee.id AS 'empID', CONCAT(employee.first_name, ' ', employee.last_name) AS 'Employee', department.dept_name AS 'Department', role.title AS 'Title', role.salary AS 'Salary', CONCAT(manager.first_name, ' ', manager.last_name) AS 'Manager' FROM employee employee LEFT JOIN employee manager ON manager.id = employee.manager_id LEFT JOIN role role ON employee.role_id = role.id LEFT JOIN department department ON department.id = role.department_id ORDER BY employee.id ASC;", function (err, empData) {
         if (err) throw err;
         // console.log(res); //<< returns everything as promised
-        const deptArray = res.map(({ Department }) => Department);
+        const deptArray = empData.map(({ Department }) => Department);
         // console.log(deptArray);
         const deptChoice = [];
         deptArray.forEach((dept) => {
@@ -252,7 +261,7 @@ function createEmployee() {
             }
         });
         // console.log(deptChoice);
-        const roleArray = res.map(({ Title }) => Title);
+        const roleArray = empData.map(({ Title }) => Title);
         // console.log(roleArray);
         const roleChoice = [];
         roleArray.forEach((role) => {
@@ -260,7 +269,7 @@ function createEmployee() {
                 roleChoice.push(role)
             }
         });
-        const fullNameArray = res.map(({ Employee }) => Employee)
+        const fullNameArray = empData.map(({ Employee }) => Employee)
         // console.log(fullNameArray);
 
         inquirer.prompt([{
@@ -282,7 +291,7 @@ function createEmployee() {
             message: "What is your new employees's role?",
             choices: roleChoice
         }, {
-            type: "list",
+            type: "rawlist",
             name: "managerName",
             message: "Who is your new employee's manager?",
             choices: fullNameArray
@@ -296,10 +305,10 @@ function createEmployee() {
                     if (answer.title === roleTitle[i]) {
                         const newRoleID = roleID[i];
                         // console.log(newRoleID);
-                        
-                        connection.query("SELECT employee.id AS 'empID', CONCAT(employee.first_name, ' ', employee.last_name) AS 'Employee' FROM employee employee LEFT JOIN employee manager ON manager.id = employee.manager_id", function (err, empData) {
-                            const empID = empData.map(({empID }) => empID);
-                            const mgrFullName = empData.map(({ Employee }) => Employee);
+
+                        connection.query("SELECT employee.id AS 'empID', CONCAT(employee.first_name, ' ', employee.last_name) AS 'Employee' FROM employee employee LEFT JOIN employee manager ON manager.id = employee.manager_id", function (err, empMgrData) {
+                            const empID = empMgrData.map(({ empID }) => empID);
+                            const mgrFullName = empMgrData.map(({ Employee }) => Employee);
                             for (var i = 0; i < roleTitle.length; i++)
                                 if (answer.managerName === mgrFullName[i]) {
                                     const newMgrID = empID[i];
@@ -315,7 +324,9 @@ function createEmployee() {
                                         }, function (err, res) {
                                             if (err) throw err;
 
-                                            console.log(`${answer.first_name} ${answer.last_name} has been added to the employee list!`);
+                                            console.log(`=============\n`);
+                                            console.log(`\n   ${answer.first_name} ${answer.last_name} in \n   ${answer.dept_name} department as a(n) \n   ${answer.title} has been added!\n`);
+                                            console.log(`=============\n`);
 
                                             whatToDoFirst();
                                         }
@@ -323,25 +334,69 @@ function createEmployee() {
                                 }//=== end for-loop
                         })
                     }
-                    }) 
-                });
+            })
         });
-    } // ==== End of createEmployee function
+    });
+} // ==== End of createEmployee function
 
 
-// function updateEmployeeRole() {
-        // const employeeQuery = 'SELECT * FROM employee';
-        // connection.query(employeeQuery, (err, res) => {
-        // if(err) throw err;
-//     inquirer.prompt([{
-//         type: "list",
-//         name: "empChoice",
-//         message: "Which employee would you like to update?",
-//         choices: 
-//     }, {
-//         type: "list",
-//         name: "role_update",
-//         message: "What role would you like to update it to?"
-//         choices:
-//     }]).then(function (answer) {
+function updateEmployeeRole() {
+    connection.query("SELECT employee.id AS 'empID', CONCAT(employee.first_name, ' ', employee.last_name) AS 'Employee', employee.role_id AS 'role_ID', role.id, role.title AS 'Title', role.salary FROM employee LEFT JOIN role ON employee.role_id = role.id", function (err, empRoleData) {
+        if (err) throw err;
+        const empNames = empRoleData.map(({ Employee }) => Employee);
+        // console.log(empNames)
+        const empRoles = empRoleData.map(({ Title }) => Title);
+        // console.log(empRoles)
+        const empRoleChoice = [];
+        empRoles.forEach((role) => {
+            if (!empRoleChoice.includes(role)) {
+                empRoleChoice.push(role)
+            }
+        });
 
+        inquirer.prompt([{
+            type: "rawlist",
+            name: "empChoice",
+            message: "Which employee would you like to update?",
+            choices: empNames
+        }, {
+            type: "list",
+            name: "roleUpdate",
+            message: "What role would you like to update it to?",
+            choices: empRoleChoice
+        }]).then(function (answer) {
+            const roleID = empRoleData.map(({ role_ID }) => role_ID);
+            for (var i = 0; i < empRoleChoice.length; i++)
+                if (answer.roleUpdate === empRoleChoice[i]) {
+                    const newRoleID = roleID[i];
+                    // console.log(newRoleID)
+                    const empID = empRoleData.map(({ empID }) => empID);
+                    for (var i = 0; i < empNames.length; i++)
+                        if (answer.empChoice === empNames[i]) {
+                            const newEmpID = empID[i];
+                            // console.log(newEmpID)
+
+                            connection.query("UPDATE employee SET ? WHERE ?",
+                                [
+                                    {
+                                        role_ID: newRoleID
+                                    },
+                                    {
+                                        id: newEmpID
+                                    }
+                                ],
+                                function (err, res) {
+                                    if (err) throw err;
+
+                                    console.log(`=============\n`);
+                                    console.log(`\n   ${answer.empChoice}'s role has been changed to ${answer.roleUpdate}\n`);
+                                    console.log(`=============\n`);
+
+                                    whatToDoFirst();
+                                }
+                            );
+                        }// == end enmpID forLoop
+                } //== end of roleID forLoop
+        }) //== end of .then(func
+    }) //== end of first query from top of func
+}//== end of updateEmployeeRole()
