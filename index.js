@@ -190,9 +190,8 @@ function createDept() {
 } // === end of createDept function
 
 function createRole() {
-    connection.query("SELECT dept_name FROM department", function (err, res) {
+    connection.query("SELECT role.title, role.salary, role.department_id, department.dept_name, department.id FROM department INNER JOIN role ON role.department_id = department.id", function (err, res) {
         if (err) throw err;
-        // console.log(res);
         const resArray = res.map(({ dept_name }) => dept_name);
         resArray.push('New Department')
         // console.log(resArray)
@@ -201,44 +200,69 @@ function createRole() {
             name: "role_dept",
             message: "What department is this new role in?",
             choices: resArray
-        }, { //====================== NEED TO BREAK UP and THEN do the other prompts
-            type: "input",
-            name: "role_title",
-            message: "What is the title of the new role?"
-        }, {
-            type: "input",
-            name: "role_salary",
-            message: "What is salary for this new role?"
         }]).then(function (answer) {
             if (answer.role_dept === "New Department") {
+                console.log(`!! ** PLEASE ENTER NEW DEPARTMENT FIRST ** !!`);
                 createDept();
-
             } else {
-                console.log("Inserting a new role...\n");
-                for (let i = 0; i < resArray.length; i++) {
-                    console.log(answer.role_dept[i]);
-                    const newDeptId = (parseInt(answer.role_dept[i]))
-
+                const deptName = res.map(({ dept_name }) => dept_name);
+                const newId = deptName.indexOf(answer.role_dept);
+                // console.log(newId);
+                inquirer.prompt([{
+                    type: "input",
+                    name: "role_title",
+                    message: "What is the title of the new role?"
+                }, {
+                    type: "input",
+                    name: "role_salary",
+                    message: "What is salary for this new role?"
+                }]).then(function (answer) {
+                    console.log("Inserting a new role...\n");
                     connection.query(
                         "INSERT INTO role SET ?",
                         {
                             title: answer.role_title,
                             salary: answer.role_salary,
-                            department_id: newDeptId
-
+                            department_id: newId
                         }, function (err, res) {
-                            if (err) { throw err; }
+                            if (err) throw err;
 
-                            console.log(res.affectedRows + " role added!\n");
+                            console.log(`New Role Added!`);
+
+                            whatToDoFirst();
                         }
-                    );
-                }
+                    )
+                })
             }
-        });
+        })
     })
-}; // === End of createRole function
+}//=== end function
+
 
 function createEmployee() {
+    connection.query("SELECT * FROM department INNER JOIN role ON department.id = role.department_id INNER JOIN employee ON role.id = employee.role_id", function (err, res) {
+        if (err) throw err;
+        // console.log(res); //<< returns everything as promised
+        const deptArray = res.map(({ dept_name }) => dept_name);
+        // console.log(deptArray);
+        const deptChoice = [];
+        deptArray.forEach((dept) => {
+            if (!deptChoice.includes(dept)){
+                deptChoice.push(dept)
+            }
+        });
+        // console.log(deptChoice);
+        const roleArray = res.map(({ title }) => title);
+        // console.log(roleArray);
+        const roleChoice = [];
+        roleArray.forEach((role) => {
+            if (!roleChoice.includes(role)){
+                roleChoice.push(role)
+            }
+        });
+        // console.log(roleChoice);
+    });
+
     inquirer.prompt([{
         type: "input",
         name: "first_name",
@@ -251,11 +275,12 @@ function createEmployee() {
         type: "list",
         name: "dept_name",
         message: "Which department is the new employer going to be assigned to?",
-        choices: deptChoiceArray
+        choices: deptChoice
     }, {
-        type: "input",
+        type: "list",
         name: "title",
-        message: "What is your new employees's role title?"
+        message: "What is your new employees's role title?",
+        choices: roleChoice
     }, {
         type: "input",
         name: "managerName",
@@ -287,6 +312,46 @@ function createEmployee() {
         console.log(query.sql);
     });
 } // ==== End of createEmployee function
+
+
+
+
+
+ // connection.query("SELECT * FROM department", function (err, res) {
+ //     if (err) throw err;
+ //     // console.log(res);
+ //     const deptName = res.map(({ dept_name }) => dept_name);
+ //     // console.log(deptName);
+ //     const deptId = res.map(({ id }) => id);
+ //     // console.log(deptId);
+
+ //     for (var i = 0; i < deptName.length; i++) {
+ //         if (deptName[i] === answer.role_dept) {
+ //             const dept_id = deptId[i];
+
+ //             connection.query("INSERT INTO role SET ?",
+ //  {
+ //      department_id: dept_id
+ //                 }, function (err, res) {
+ //      if (err) throw err;
+ //  }) // end closest query
+ //         }
+ //     }; //== ending for loop
+ // }); // === end second closest query
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // function updateEmployeeRole() {
