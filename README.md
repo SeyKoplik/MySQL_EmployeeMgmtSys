@@ -57,6 +57,9 @@ answer questions in the prompt appropriately to process data
 - Node JS
 - Inquirer
 - MySQL
+- Console.table
+- Figlet 
+- Dotenv
 
 ## License
 
