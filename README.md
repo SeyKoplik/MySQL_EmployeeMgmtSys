@@ -11,7 +11,7 @@ This is a Content Management System created for tracking Employees in a company'
 
 <img src="emptracker.png">
 <br>
-<imr src="emptracker2.png">
+<img src="emptracker2.png">
 
 ## Installation
 
