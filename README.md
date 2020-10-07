@@ -1,1 +1,67 @@
-# MySQL_EmployeeTracker
+# MySQL -- Employee Tracker
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+
+## Description
+
+This is a Content Management System created for tracking Employees in a company's database. In this application, a user can do various things to keep track of employee data. With the use of node, inquirer, and MySQL is it possible to build an interface that can function as a record keeper
+
+## Screenshots
+
+<img src="emptracker.png">
+
+## Installation
+
+Inside the file folder directory... 
+
+```
+npm install inquirer mysql --save 
+```
+On MySQL Workbench
+
+```
+copy and paste schema.sql along with seeds.sql
+```
+
+Once database is established ...
+while inside the directory of the tracker...
+
+```
+node index.js
+
+answer questions in the prompt appropriately to process data
+```
+
+## Usage
+
+* User can use the application to view... 
+    - Department
+    - Role
+    - Employees
+    - Employees by Department
+    - Employees by Manager
+
+* User can use application to add...
+    - New Department
+    - New Role
+    - New Employee
+
+* User can use application to update..
+    - Employee role
+
+## Attributes
+
+- Node JS
+- Inquirer
+- MySQL
+
+## License
+
+MIT
+
+## Links
+
+
+-----
+© 2020 Seychelle Koplik
