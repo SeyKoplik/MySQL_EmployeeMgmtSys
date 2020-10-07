@@ -41,6 +41,7 @@ const whatToDoFirst = function () {
             "View departments, roles, employees, or everything",
             "Add department, roles, or employees",
             "Update Employee Role",
+            "Remove a department, role, or employee",
             "Exit"
         ]
     }).then(function (answer) {
@@ -60,6 +61,10 @@ const whatToDoFirst = function () {
                 // console.log('Update Employee Role!');
                 updateEmployeeRole();
                 break;
+
+            case "Remove a department, role, or employee":
+                //console.log('Remove!);
+                whatToRemove();
 
             default:
                 connection.end();
@@ -406,14 +411,13 @@ function createEmployee() {
                                             whatToDoFirst();
                                         }
                                     )
-                                }//=== end for-loop
+                                }
                         })
                     }
             })
         });
     });
 } // ==== End of createEmployee function
-
 
 function updateEmployeeRole() {
     connection.query("SELECT employee.id AS 'empID', CONCAT(employee.first_name, ' ', employee.last_name) AS 'Employee', employee.role_id AS 'role_ID', role.id, role.title AS 'Title', role.salary FROM employee LEFT JOIN role ON employee.role_id = role.id", function (err, empRoleData) {
@@ -470,10 +474,124 @@ function updateEmployeeRole() {
                                     whatToDoFirst();
                                 }
                             );
-                        }// == end enmpID forLoop
-                } //== end of roleID forLoop
-        }) //== end of .then(func
-    }) //== end of first query from top of func
-}//== end of updateEmployeeRole()
+                        }
+                }
+        })
+    })
+}//===== End of Update Employee Role..
 
+function whatToRemove() {
+    inquirer.prompt([{
+        type: "list",
+        name: "delete",
+        message: "What would you like to remove?",
+        choices: [
+            "Department",
+            "Role",
+            "Employee"
+        ]
+    }]).then(function (answer) {
+        switch (answer.delete) {
+            case "Department":
+                removeDept();
+                break;
+
+            case "Role":
+                removeRole();
+                break;
+
+            case "Employee":
+                removeEmployee();
+                break;
+
+        }
+    })
+}
+
+function removeDept() {
+    connection.query("SELECT id, dept_name FROM department", function (err, deptData) {
+        if (err) throw err;
+
+        deptData.map(({ id, dept_name }) => {
+            const newDeptArr = {
+                name: dept_name,
+                value: id
+            }
+            console.log(newDeptArr)
+
+            inquirer.prompt({
+                type: "list",
+                name: "deptNames",
+                message: "Which department would you like to remove?",
+                choices: newDeptArr
+            }).then(function (answer) {
+                connection.query("DELETE FROM department WHERE id = ?", [answer.deptNames], function (err, res) {
+                    if (err) throw err;
+                    console.log(`=============\n`);
+                    console.log(`\n   ${answer.deptNames} has been deleted from the database!\n`)
+                    console.log(`=============\n`);
+
+                    whatToDoFirst();
+                })
+            })
+        });
+    })
+}
+
+function removeRole() {
+    connection.query("SELECT id, title FROM role", function (err, roleData) {
+        if (err) throw err;
+        roleData.map(({ id, title }) => {
+            const newRoleArr = {
+                name: title,
+                value: id
+            }
+            inquirer.prompt({
+                type: "rawlist",
+                name: "roleNames",
+                message: "Which role would you like to remove?",
+                choices: newRoleArr
+            }).then(function (answer) {
+                connection.query("DELETE FROM role WHERE id = ?", [answer.roleNames], function (err, res) {
+                    if (err) throw err;
+                    console.log(`=============\n`);
+                    console.log(`\n   ${answer.roleNames} has been deleted from the database!\n`)
+                    console.log(`=============\n`);
+
+                    whatToDoFirst();
+                })
+            })
+
+        });
+    })
+}
+
+function removeEmployee() {
+    connection.query("SELECT id, first_name, last_name FROM employee", function (err, empData) {
+        if (err) throw err;
+        empData.map(({ id, first_name, last_name }) => {
+            const newEmpNames = {
+                name: `${first_name} ${last_name}`,
+                value: id
+            }
+            // console.log(newEmpNames);
+            inquirer.prompt({
+                type: "rawlist",
+                name: "empNames",
+                message: "Which employee would you like to remove?",
+                choices: newEmpNames
+            }).then(function (answer) {
+                connection.query("DELETE FROM employee WHERE id = ?", [answer.empNames], function (err, res) {
+                    if (err) throw err;
+                    console.log(`=============\n`);
+                    console.log(`\n   ${answer.empNames} has been deleted from the database!\n`)
+                    console.log(`=============\n`);
+
+                    whatToDoFirst();
+                })
+            })
+
+        });
+    })
+}
 
