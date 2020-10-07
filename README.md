@@ -10,6 +10,8 @@ This is a Content Management System created for tracking Employees in a company'
 ## Screenshots
 
 <img src="emptracker.png">
+<br>
+<imr src="emptracker2.png">
 
 ## Installation
 
