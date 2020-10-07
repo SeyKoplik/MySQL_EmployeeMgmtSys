@@ -512,40 +512,44 @@ function removeDept() {
     connection.query("SELECT id, dept_name FROM department", function (err, deptData) {
         if (err) throw err;
 
+        const newDeptArr = [];
         deptData.map(({ id, dept_name }) => {
-            const newDeptArr = {
+            newDeptArr.push({
                 name: dept_name,
                 value: id
-            }
-            console.log(newDeptArr)
-
-            inquirer.prompt({
-                type: "list",
-                name: "deptNames",
-                message: "Which department would you like to remove?",
-                choices: newDeptArr
-            }).then(function (answer) {
-                connection.query("DELETE FROM department WHERE id = ?", [answer.deptNames], function (err, res) {
-                    if (err) throw err;
-                    console.log(`=============\n`);
-                    console.log(`\n   ${answer.deptNames} has been deleted from the database!\n`)
-                    console.log(`=============\n`);
-
-                    whatToDoFirst();
-                })
-            })
+            });
         });
-    })
+        console.log(newDeptArr)
+
+        inquirer.prompt({
+            type: "list",
+            name: "deptNames",
+            message: "Which department would you like to remove?",
+            choices: newDeptArr
+        }).then(function (answer) {
+            connection.query("DELETE FROM department WHERE id = ?", [answer.deptNames], function (err, res) {
+                if (err) throw err;
+                console.log(`=============\n`);
+                console.log(`\n   ${answer.deptNames} has been deleted from the database!\n`)
+                console.log(`=============\n`);
+
+                whatToDoFirst();
+            })
+        })
+    });
 }
 
 function removeRole() {
     connection.query("SELECT id, title FROM role", function (err, roleData) {
         if (err) throw err;
+        const newRoleArr = [];
         roleData.map(({ id, title }) => {
-            const newRoleArr = {
+            newRoleArr.push({
                 name: title,
                 value: id
-            }
+            });
+        });
+
             inquirer.prompt({
                 type: "rawlist",
                 name: "roleNames",
@@ -563,17 +567,18 @@ function removeRole() {
             })
 
         });
-    })
 }
 
 function removeEmployee() {
     connection.query("SELECT id, first_name, last_name FROM employee", function (err, empData) {
         if (err) throw err;
+        const newEmpNames = [];
         empData.map(({ id, first_name, last_name }) => {
-            const newEmpNames = {
+            newEmpNames.push({
                 name: `${first_name} ${last_name}`,
                 value: id
-            }
+            })
+        })
             // console.log(newEmpNames);
             inquirer.prompt({
                 type: "rawlist",
@@ -590,8 +595,6 @@ function removeEmployee() {
                     whatToDoFirst();
                 })
             })
-
         });
-    })
 }
 

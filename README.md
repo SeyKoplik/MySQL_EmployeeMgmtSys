@@ -73,5 +73,7 @@ MIT
 
 *** The [Remove dept, role, or employee] does not work. I keep running on an error for that section. This was a bonus section so I did not take too much time trying to figure it out before the homework was due.
 
+!! UPDATE: Got some instruction on how to make it work. The remove section now has functionality!
+
 -----
 © 2020 Seychelle Koplik
