@@ -69,5 +69,9 @@ MIT
 
 <a href="https://drive.google.com/file/d/1lDKU2YeRZLe-GmXP4RKaoshsMCyZHxir/view"> Video Demo Link for Command Line Interface</a>
 
+## Challenges/Incomplete
+
+*** The [Remove dept, role, or employee] does not work. I keep running on an error for that section. This was a bonus section so I did not take too much time trying to figure it out before the homework was due.
+
 -----
 © 2020 Seychelle Koplik
