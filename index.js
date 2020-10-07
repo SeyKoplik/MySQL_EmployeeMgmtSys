@@ -65,10 +65,10 @@ const whatToDoFirst = function () {
             case "Remove a department, role, or employee":
                 //console.log('Remove!);
                 whatToRemove();
+                break;
 
             default:
                 connection.end();
-                break;
         };
     })
 } // === end of whatToDoFirst function

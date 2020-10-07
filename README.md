@@ -62,6 +62,7 @@ MIT
 
 ## Links
 
+<a href="https://drive.google.com/file/d/1lDKU2YeRZLe-GmXP4RKaoshsMCyZHxir/view"> Video Demo Link for Command Line Interface</a>
 
 -----
 © 2020 Seychelle Koplik
