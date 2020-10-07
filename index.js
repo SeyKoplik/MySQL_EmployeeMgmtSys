@@ -78,6 +78,7 @@ const whatToView = function () {
             "Roles",
             "Employees",
             "Employee by Department",
+            "Employee by Manager",
             "Everything!"]
     }).then(function (answer) {
         switch (answer.viewPrompt) {
@@ -99,6 +100,11 @@ const whatToView = function () {
             case "Employee by Department":
                 //console.log('Employee by department!');
                 viewEmpByDept();
+                break;
+
+            case "Employee by Manager":
+                //console.log('Employee by manager!');
+                viewEmpByMgr();
                 break;
 
             case "Everything!":
@@ -141,8 +147,7 @@ function viewEmpByDept() {
     connection.query("SELECT dept_name FROM department", function (err, deptData) {
         if (err) throw err;
         const deptArray = deptData.map(({ dept_name }) => dept_name);
-        console.log(deptArray);
-
+        // console.log(deptArray);
         inquirer.prompt({
             type: "list",
             name: "viewDepts",
@@ -150,7 +155,8 @@ function viewEmpByDept() {
             choices: deptArray
         }).then(function (answer) {
             console.log("Selecting all Employees by Department...\n");
-            connection.query("SELECT department.dept_name AS 'Department', employee.id AS 'ID', CONCAT(employee.first_name, ' ', employee.last_name) AS 'Employee', role.title AS 'Role', role.salary AS 'Salary', CONCAT(manager.first_name, ' ', manager.last_name) AS 'Manager' FROM employee LEFT JOIN employee manager ON manager.id = employee.manager_id INNER JOIN Role role ON employee.role_id = role.id INNER JOIN department ON department.id = role.department_id WHERE department.dept_name = ? ", [answer.viewDepts], function (err, res) {
+
+            connection.query("SELECT department.dept_name AS 'Department', employee.id AS 'ID', CONCAT(employee.first_name, ' ', employee.last_name) AS 'Employee', role.title AS 'Role', role.salary AS 'Salary', CONCAT(manager.first_name, ' ', manager.last_name) AS 'Manager' FROM employee LEFT JOIN employee manager ON manager.id = employee.manager_id INNER JOIN role ON employee.role_id = role.id INNER JOIN department ON department.id = role.department_id WHERE department.dept_name = ? ", [answer.viewDepts], function (err, res) {
                 if (err) throw err;
                 console.table(res);
                 whatToDoFirst();
@@ -159,18 +165,51 @@ function viewEmpByDept() {
     })
 }
 
+
+function viewEmpByMgr() {
+    connection.query("SELECT * FROM employee", function (err, empData) {
+        if (err) throw err;
+        const empArray = empData.map(({ id, first_name, last_name }) =>
+            ({
+                name: `${first_name} ${last_name}`,
+                value: id
+            }));
+        // console.log(empArray);
+        inquirer.prompt({
+            type: "list",
+            name: "mgrID",
+            message: "Which manager's employees would you like to see?",
+            choices: empArray
+        }).then(function (answer) {
+            console.log("Selecting all Employees by Manager...\n");
+            // console.log(answer.mgrID);
+            connection.query("SELECT employee.id, CONCAT(employee.first_name, ' ', employee.last_name) AS 'Employee', role.title AS 'Role', role.salary AS 'Salary', CONCAT(manager.first_name, ' ', manager.last_name) AS Manager FROM employee LEFT JOIN employee manager ON manager.id = employee.manager_id INNER JOIN role ON employee.role_id = role.id WHERE employee.manager_id = ? ", [answer.mgrID], function (err, res) {
+                if (err) throw err;
+                // console.log(res)
+                if (!res.length) {
+                    console.log(`*** SORRY! This individual has no employees they are in charge of! ***\n\n`);
+                    viewEmpByMgr();
+                } else {
+                    console.table(res);
+                    whatToDoFirst();
+                }
+            })
+        });
+    })
+}
+
+
 function viewAll() {
     console.log("Selecting all info...\n");
     connection.query
-        ("SELECT employee.id, CONCAT(employee.first_name, ' ', employee.last_name) AS 'Employee', department.dept_name AS 'Department', role.title AS 'Title', role.salary AS 'Salary', CONCAT(manager.first_name, ' ', manager.last_name) AS 'Manager' FROM employee employee LEFT JOIN employee manager ON manager.id = employee.manager_id LEFT JOIN role role ON employee.role_id = role.id LEFT JOIN department department ON department.id = role.department_id ORDER BY employee.id ASC;", function (err, res) {
+        ("SELECT employee.id, CONCAT(employee.first_name, ' ', employee.last_name) AS 'Employee', department.dept_name AS 'Department', role.title AS 'Title', role.salary AS 'Salary', CONCAT(manager.first_name, ' ', manager.last_name) AS 'Manager' FROM employee LEFT JOIN employee manager ON manager.id = employee.manager_id LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON department.id = role.department_id ORDER BY employee.id ASC;", function (err, res) {
             if (err) throw err;
             console.table(res);
             whatToDoFirst();
         });
 }
 
-
-const whatToAdd = function () {
+function whatToAdd() {
     inquirer.prompt([{
         type: "list",
         name: "addingPrompt",
