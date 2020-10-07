@@ -271,11 +271,17 @@ function createRole() {
         const resArray = roleData.map(({ dept_name }) => dept_name);
         resArray.push('New Department')
         // console.log(resArray)
+        const deptChoice = [];
+        resArray.forEach((dept) => {
+            if (!deptChoice.includes(dept)) {
+                deptChoice.push(dept)
+            }
+        });
         inquirer.prompt([{
             type: "list",
             name: "role_dept",
             message: "What department is this new role in?",
-            choices: resArray
+            choices: deptChoice
         }]).then(function (answer) {
             if (answer.role_dept === "New Department") {
                 console.log(`!! ** PLEASE ENTER NEW DEPARTMENT FIRST ** !!`);
@@ -469,3 +475,5 @@ function updateEmployeeRole() {
         }) //== end of .then(func
     }) //== end of first query from top of func
 }//== end of updateEmployeeRole()
+
+
