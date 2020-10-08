@@ -519,7 +519,7 @@ function removeDept() {
                 value: id
             });
         });
-        console.log(newDeptArr)
+        // console.log(newDeptArr)
 
         inquirer.prompt({
             type: "list",
@@ -529,8 +529,17 @@ function removeDept() {
         }).then(function (answer) {
             connection.query("DELETE FROM department WHERE id = ?", [answer.deptNames], function (err, res) {
                 if (err) throw err;
+
+                let newPosted = "";
+                for (var i = 0; i < newDeptArr.length; i++) {
+                    if (answer.deptNames === newDeptArr[i].value) {
+                        newPosted = newDeptArr[i].name
+                    }
+                }
+                // console.log(newPosted);
+
                 console.log(`=============\n`);
-                console.log(`\n   ${answer.deptNames} has been deleted from the database!\n`)
+                console.log(`\n   ${newPosted} has been deleted from the database!\n`)
                 console.log(`=============\n`);
 
                 whatToDoFirst();
@@ -550,23 +559,30 @@ function removeRole() {
             });
         });
 
-            inquirer.prompt({
-                type: "rawlist",
-                name: "roleNames",
-                message: "Which role would you like to remove?",
-                choices: newRoleArr
-            }).then(function (answer) {
-                connection.query("DELETE FROM role WHERE id = ?", [answer.roleNames], function (err, res) {
-                    if (err) throw err;
-                    console.log(`=============\n`);
-                    console.log(`\n   ${answer.roleNames} has been deleted from the database!\n`)
-                    console.log(`=============\n`);
+        inquirer.prompt({
+            type: "rawlist",
+            name: "roleNames",
+            message: "Which role would you like to remove?",
+            choices: newRoleArr
+        }).then(function (answer) {
+            connection.query("DELETE FROM role WHERE id = ?", [answer.roleNames], function (err, res) {
+                if (err) throw err;
 
-                    whatToDoFirst();
-                })
+                let removedRole = "";
+                for (var i = 0; i < newRoleArr.length; i++) {
+                    if (answer.roleNames === newRoleArr[i].value) {
+                        removedRole = newRoleArr[i].name
+                    }
+                }
+                console.log(`=============\n`);
+                console.log(`\n   ${removedRole} has been deleted from the database!\n`)
+                console.log(`=============\n`);
+
+                whatToDoFirst();
             })
+        })
 
-        });
+    });
 }
 
 function removeEmployee() {
@@ -579,22 +595,30 @@ function removeEmployee() {
                 value: id
             })
         })
-            // console.log(newEmpNames);
-            inquirer.prompt({
-                type: "rawlist",
-                name: "empNames",
-                message: "Which employee would you like to remove?",
-                choices: newEmpNames
-            }).then(function (answer) {
-                connection.query("DELETE FROM employee WHERE id = ?", [answer.empNames], function (err, res) {
-                    if (err) throw err;
-                    console.log(`=============\n`);
-                    console.log(`\n   ${answer.empNames} has been deleted from the database!\n`)
-                    console.log(`=============\n`);
+        // console.log(newEmpNames);
+        inquirer.prompt({
+            type: "rawlist",
+            name: "empNames",
+            message: "Which employee would you like to remove?",
+            choices: newEmpNames
+        }).then(function (answer) {
+            connection.query("DELETE FROM employee WHERE id = ?", [answer.empNames], function (err, res) {
+                if (err) throw err;
 
-                    whatToDoFirst();
-                })
+                let removedEmp = "";
+                for (var i = 0; i < newEmpNames.length; i++) {
+                    if (answer.empNames === newEmpNames[i].value) {
+                        removedEmp = newEmpNames[i].name
+                    }
+                }
+
+                console.log(`=============\n`);
+                console.log(`\n   ${removedEmp} has been deleted from the database!\n`)
+                console.log(`=============\n`);
+
+                whatToDoFirst();
             })
-        });
+        })
+    });
 }
 
